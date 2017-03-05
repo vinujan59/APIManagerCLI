@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"net/http"
 	"encoding/json"
+	"crypto/tls"
 )
 
 type LoginResponse struct {
-	error bool `json:"error"`
+	Error bool
+	Message string
 }
 
 func main() {
@@ -40,23 +42,29 @@ func main() {
 			Usage:   "User login",
 			Action:  func(c *cli.Context) error {
 				//if(username)
-				fmt.Println("User login : ", c.Args().First(), c.String("username"), " ", c.String("password"))
+				//fmt.Println("User login : ", c.Args().First(), c.String("username"), " ", c.String("password"))
 				resp, err := resty.R().SetQueryParams(map[string]string{
 					"action":"login",
 					"username":username,
 					"password":password,
-				})./*SetHeader("accept","").*/
-					Post("http://localhost:9763/publisher/site/blocks/user/login/ajax/login.jag")
-				fmt.Printf("\nResponse Body: %v", resp)
-				loginResponse := LoginResponse{}
-				json.Unmarshal(resp.Body(), loginResponse)
-				if (loginResponse.error) {
+				}).Post("http://localhost:9763/publisher/site/blocks/user/login/ajax/login.jag")
+
+				if err!=nil {fmt.Printf("\nError: %v \n", err)}
+
+				//fmt.Println(resp)
+				var loginResponse LoginResponse
+				unMarshalError := json.Unmarshal([]byte(resp.String()), &loginResponse)
+				if unMarshalError != nil{
+					fmt.Println(unMarshalError)
+				}else{
+					//fmt.Println(loginResponse)
+				}
+				if loginResponse.Error {
 					fmt.Println("login Failed!")
 				}else {
 					cookies = resp.Cookies()
 					fmt.Println("login success")
 				}
-				fmt.Printf("\nError: %v", err)
 				return nil
 			},
 			Flags : []cli.Flag{
@@ -75,12 +83,75 @@ func main() {
 
 		},
 		{
+			Name:    "export",
+			Aliases: []string{"e"},
+			Usage:   "exporting api as zip file",
+			Action:  func(c *cli.Context) error {
+				fmt.Println("Exporting api....!")
+				resty.SetTLSClientConfig(&tls.Config{ InsecureSkipVerify: true })
+				resp,err := resty.R().SetQueryParams(map[string]string{
+					"name":c.String("apiname"),
+					"version":c.String("apiversion"),
+					"provider":c.String("apiprovider"),
+				}).SetBasicAuth("admin","admin").
+				Get("https://localhost:9443/api-import-export-2.0.0-v0/export-api")
+
+
+				if err!=nil {
+					fmt.Printf("Error is %v",err)
+				}else{
+					fmt.Printf("Resposne %v \n",resp)
+				}
+				return nil
+			},
+			Flags:[]cli.Flag{
+				cli.StringFlag{
+					Name:"apiname",
+					Value:"",
+					Usage:"Name of the API",
+				},
+				cli.StringFlag{
+					Name:"apiprovider",
+					Value:"",
+					Usage:"API provider username",
+				},
+				cli.StringFlag{
+					Name:"apiversion",
+					Value:"",
+					Usage:"API version",
+				},
+				cli.StringFlag{
+					Name:"exportedapiname",
+					Value:"",
+					Usage:"Name of exporting file with path",
+				},
+			},
+		},
+		{
 			Name:    "import",
 			Aliases: []string{"i"},
-			Usage:   "add a task to the list",
+			Usage:   "importing api as zip file",
 			Action:  func(c *cli.Context) error {
-				fmt.Println("added task: ", c.Args().First())
+				fmt.Println("Importing api....!")
+				resty.SetTLSClientConfig(&tls.Config{ InsecureSkipVerify: true })
+				resp,err := resty.R().SetBasicAuth("admin","admin").
+				SetFile(c.String("filePath")).
+				Post("https://localhost:9443/api-import-export-2.0.0-v0/import-api")
+
+
+				if err!=nil {
+					fmt.Printf("Error is %v",err)
+				}else{
+					fmt.Printf("Resposne %v \n",resp)
+				}
 				return nil
+			},
+			Flags:[]cli.Flag{
+				cli.StringFlag{
+					Name:"filePath",
+					Value:"",
+					Usage:"importing file path",
+				},
 			},
 		},
 		//{
