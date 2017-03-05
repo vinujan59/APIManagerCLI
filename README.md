@@ -11,3 +11,8 @@ Command line tool for wso2 API manager
 >>>4. Get the app by executing `go get github.com/vinujan/APIManagerCLI` inside `GOPATH` directory
 >>>5. built the application by `go install github.com/vinujan/APIManagerCLI`
 >>>6. run the `app` inside bin directory inside `GOPATH`
+
+>>>###Library used
+>>>1. [cli](https://github.com/urfave/cli) - a package for building commandline apps
+>>>2. [resty](https://github.com/go-resty/resty) - a http client library
+
