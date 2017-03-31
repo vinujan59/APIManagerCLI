@@ -49,7 +49,9 @@ func main() {
 					"password":password,
 				}).Post("http://localhost:9763/publisher/site/blocks/user/login/ajax/login.jag")
 
-				if err!=nil {fmt.Printf("\nError: %v \n", err)}
+				if err!=nil{
+					fmt.Printf("\nError: %v \n", err)
+				}
 
 				//fmt.Println(resp)
 				var loginResponse LoginResponse
@@ -135,7 +137,7 @@ func main() {
 				fmt.Println("Importing api....!")
 				resty.SetTLSClientConfig(&tls.Config{ InsecureSkipVerify: true })
 				resp,err := resty.R().SetBasicAuth("admin","admin").
-				SetFile(c.String("filePath")).
+				SetFile(c.String("fileName"),c.String("filePath")).
 				Post("https://localhost:9443/api-import-export-2.0.0-v0/import-api")
 
 
@@ -151,6 +153,11 @@ func main() {
 					Name:"filePath",
 					Value:"",
 					Usage:"importing file path",
+				},
+				cli.StringFlag{
+					Name:"fileName",
+					Value:"",
+					Usage:"file name",
 				},
 			},
 		},
